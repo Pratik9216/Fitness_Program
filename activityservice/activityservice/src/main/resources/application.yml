@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: activityservice
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/aiactivityfitness
+      database: aiactivityfitness
+
+
+server:
+  port: 8082
+
+logging:
+  level:
+    org.springframework.data.mongodb: DEBUG
+    com.mongodb.driver: DEBUG

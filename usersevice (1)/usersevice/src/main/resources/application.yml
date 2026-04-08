@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: usersevice
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fitness-demo-user
+    username: postgres
+    password: 'REDACTED'
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8081
