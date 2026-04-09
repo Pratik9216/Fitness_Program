@@ -12,5 +12,4 @@ server:
 
 logging:
   level:
-    org.springframework.data.mongodb: DEBUG
-    com.mongodb.driver: DEBUG
+    org.mongodb.driver.cluster: WARN
