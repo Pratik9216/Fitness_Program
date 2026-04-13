@@ -13,9 +13,12 @@ public class ActivityMessageListener {
 
     private final RecommendationService recommendationService;
 
+    private final ActivityAIService activityAIService;
+
     @KafkaListener(topics = "${kafka.topic.name}", groupId = "activity-processor-group")
     public void processActivity(Activity activity) {
         log.info("Received Activity for processing: {}", activity.getUserId());
         recommendationService.processActivity(activity);
+        activityAIService.generateRecommendation(activity);
     }
 }
