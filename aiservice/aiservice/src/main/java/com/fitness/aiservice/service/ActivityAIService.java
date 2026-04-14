@@ -1,6 +1,9 @@
 package com.fitness.aiservice.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitness.aiservice.model.Activity;
+import com.fitness.aiservice.model.Recommendation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,15 +11,144 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+
 @Service
 @Slf4j
 @AllArgsConstructor
 public class ActivityAIService {
     private final GeminiService geminiService;
 
-    public void generateRecommendation(Activity activity) {
+    public Recommendation generateRecommendation(Activity activity) {
         String prompt = createPromptForActivity(activity);
-        log.info("RESPONSE FROM AI {} ", geminiService.getRecommendations(prompt));
+        String aiResponse = geminiService.getRecommendations(prompt);
+        log.info("RESPONSE FROM AI {} ", aiResponse);
+        return processAIResponse(activity, aiResponse);
+    }
+
+    private Recommendation processAIResponse(Activity activity, String aiResponse) {
+        try{
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(aiResponse);
+            JsonNode textNode = rootNode.path("candidates")
+                    .get(0)
+                    .path("content")
+                    .get("parts")
+                    .get(0)
+                    .path("text");
+
+            String jsonContent = textNode.asText()
+                    .replaceAll("```json\\n", "")
+                    .replaceAll("\\n```", "")
+                    .trim();
+
+//            log.info("RESPONSE FROM CLEANED AI {} ", jsonContent);
+
+            JsonNode analysisJson = mapper.readTree(jsonContent);
+            JsonNode analysisNode = analysisJson.path("analysis");
+            StringBuilder fullAnalysis = new StringBuilder();
+            addAnalysisSection(fullAnalysis, analysisNode, "overall", "Overall:");
+            addAnalysisSection(fullAnalysis, analysisNode, "pace", "Pace:");
+            addAnalysisSection(fullAnalysis, analysisNode, "heartRate", "Heart Rate:");
+            addAnalysisSection(fullAnalysis, analysisNode, "caloriesBurned", "Calories:");
+
+            List<String> improvements = extractImprovements(analysisJson.path("improvements"));
+            List<String> suggestions = extractSuggestions(analysisJson.path("suggestions"));
+            List<String> safety = extractSafetyGuidelines(analysisJson.path("safety"));
+
+            return Recommendation.builder()
+                    .activityId(activity.getId())
+                    .userId(activity.getUserId())
+                    .type(activity.getType().toString())
+                    .recommendation(fullAnalysis.toString().trim())
+                    .improvements(improvements)
+                    .suggestions(suggestions)
+                    .safety(safety)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return createDefsultRecommendation(activity);
+
+        }
+    }
+
+    private Recommendation createDefsultRecommendation(Activity activity) {
+        return Recommendation.builder()
+                .activityId(activity.getId())
+                .userId(activity.getUserId())
+                .type(activity.getType().toString())
+                .recommendation("Unable to generated detailed analysis")
+                .improvements(Collections.singletonList("Continue with your current routine"))
+                .suggestions(Collections.singletonList("Consider consulting a fitness consultant"))
+                .safety(Arrays.asList(
+                        "Always warm up before exercise",
+                        "Stay hydrated",
+                        "Listen to your body"
+                ))
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    private List<String> extractSafetyGuidelines(JsonNode safetyNode) {
+        List<String> safety = new ArrayList<>();
+        if (safetyNode.isArray()) {
+            safetyNode.forEach(item -> safety.add(item.asText()));
+        }
+        return safety.isEmpty() ?
+                Collections.singletonList("Follow general safety guidelines") :
+                safety;
+    }
+
+
+    private List<String> extractSuggestions(JsonNode suggestionsNode) {
+        List<String> suggestions = new ArrayList<>();
+        if (suggestionsNode.isArray()) {
+            suggestionsNode.forEach(suggestion -> {
+                String workout = suggestion.path("workout").asText();
+                String description = suggestion.path("description").asText();
+                suggestions.add(String.format("%s: %s", workout, description));
+            });
+        }
+        return suggestions.isEmpty() ?
+                Collections.singletonList("No specific suggestion provided") :
+                suggestions;
+    }
+
+    private List<String> extractImprovements(JsonNode improvementsNode) {
+        List<String> improvements = new ArrayList<>();
+        if (improvementsNode.isArray()) {
+            improvementsNode.forEach(improvement -> {
+                String area = improvement.path("area").asText();
+                String recommendation = improvement.path("recommendation").asText();
+                improvements.add(String.format("%s: %s", area, recommendation));
+            });
+        }
+        return improvements.isEmpty() ?
+                Collections.singletonList("No specific improvements provided") :
+                improvements;
+
+    }
+
+//        "overall": "The activity is a moderate-intensity steady-state run covering 5.5 km in 45 minutes. The volume is excellent for cardiovascular maintenance and basic endurance building, showing a consistent movement pattern with a steady step count.",
+//                "pace": "The average pace is approximately 8:11 minutes per kilometer (13:10 per mile). This suggests a recovery or entry-level aerobic pace, suitable for building a base but indicating significant room for improvement in speed and power.",
+//                "heartRate": "Heart rate data was not explicitly provided, but based on the pace and calorie burn for a 45-minute duration, it is estimated that the user remained in Zone 2 or Zone 3 (Aerobic/Base), which is optimal for fat oxidation and endurance.",
+//                "caloriesBurned": "320 calories burned over 45 minutes is consistent with a light-to-moderate running intensity. This burn rate is effective for weight management but suggests the intensity was not high enough to trigger a significant afterburn effect (EPOC)."
+
+//    by below step we
+//    converted to Overall= This activity is like that.........
+
+
+    private void addAnalysisSection(StringBuilder fullAnalysis, JsonNode analysisNode, String key, String prefix) {
+    if (!analysisNode.path(key).isMissingNode()){
+        fullAnalysis.append(prefix)
+                .append(analysisNode.path(key).asText())
+                .append("\n\n");
+    }
     }
 
     private String createPromptForActivity(Activity activity) {
