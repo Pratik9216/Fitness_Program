@@ -10,8 +10,8 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
-import user.RegisterRequest;
-import user.UserService;
+import com.fitness.gateway.user.RegisterRequest;
+import com.fitness.gateway.user.UserService;
 
 import java.text.ParseException;
 
@@ -24,8 +24,10 @@ public class KeycloakUserSyncFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        log.info("Filter executing...");
         String userId = exchange.getRequest().getHeaders().getFirst("X-User-ID");
         String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+        log.info("Token present: {}", token != null);
         RegisterRequest registerRequest = getUserDetails(token);
         if (userId == null) {
             userId = registerRequest.getKeycloakId();
