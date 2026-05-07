@@ -11,10 +11,13 @@ import ActivityForm from "./components/ActivityForm";
 import ActivityDetail from "./components/ActivityDetail";
 
 const ActivitiesPage = () => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const handleActivityAdded = () => setRefreshKey((k) => k + 1);
+
   return (
     <Box sx={{ p: 2, border: '1px dashed grey'}}>
-      <ActivityForm />
-      <ActivityList />
+      <ActivityForm onActivityAdded={handleActivityAdded} />
+      <ActivityList key={refreshKey} />
     </Box>
   );
 }
