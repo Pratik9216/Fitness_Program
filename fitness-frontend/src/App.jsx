@@ -16,9 +16,14 @@ const ActivitiesPage = () => {
 
   return (
     <Box sx={{ p: 2, border: '1px dashed grey'}}>
-      <ActivityForm onActivityAdded={handleActivityAdded} />
+      <ActivityForm onActivityAdded={ () => window.location.reload()} />
       <ActivityList key={refreshKey} />
     </Box>
+
+    // <Box sx={{ p: 2, border: '1px dashed grey'}}>
+    //   <ActivityForm onActivityAdded={handleActivityAdded} />
+    //   <ActivityList key={refreshKey} />
+    // </Box>
   );
 }
 
