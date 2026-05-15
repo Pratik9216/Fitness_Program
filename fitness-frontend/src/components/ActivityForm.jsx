@@ -2,7 +2,7 @@ import { Box, Button, FormControl, InputLabel, MenuItem, Select, TextField } fro
 import React from 'react'
 import { addActivity } from '../services/api'
 
-const ActivityForm = ({onActivityAdded}) => {
+const ActivityForm = ({ onActivityAdded }) => {
 
 
     const [activity, setActivity] = React.useState({
