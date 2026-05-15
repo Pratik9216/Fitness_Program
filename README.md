@@ -284,7 +284,7 @@ Then in `application.yml` reference them like `password: ${POSTGRES_PASSWORD}`.
 
 ### .gitignore
 
-There is currently **no `.gitignore` at the repository root**, only one inside `fitness-frontend/`. Add a root-level `.gitignore` with at least:
+A root-level `.gitignore` (alongside the frontend's own one inside `fitness-frontend/`) covers build outputs, IDE files, logs, and any local secrets. It contains at least:
 
 ```gitignore
 # Build outputs
