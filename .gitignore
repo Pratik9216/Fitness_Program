@@ -1,0 +1,33 @@
+# Build outputs
+**/target/
+**/build/
+**/dist/
+**/out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+
+# Logs
+*.log
+**/logs/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+**/application-secret.yml
+**/application-secret.yaml
+**/application-secret.properties
+
+# Node (covered per-folder in fitness-frontend/.gitignore, but safety net here)
+**/node_modules/
